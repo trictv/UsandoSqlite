@@ -7,15 +7,25 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.trictv.usandosqlite.entity.Cadastro
 
-class DatabaseHandler(context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION)
+class DatabaseHandler private constructor (context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION)
 {
     companion object{
         const val DATABASE_VERSION = 1
         const val DATABASE_NAME = "bdfile.sqlite"
         const val TABLE_NAME = "cadastro"
         const val COLUMN_ID = "0"
-        const val COLUMN_NOME = "0"
-        const val COLUMN_TELEFONE = "0"
+        const val COLUMN_NOME:String = "1"
+        const val COLUMN_TELEFONE:String = "2"
+
+        @Volatile
+        private var INSTANCE : DatabaseHandler? = null
+
+        fun getInstance(context: Context) : DatabaseHandler
+        {
+            if (INSTANCE == null)
+                INSTANCE = DatabaseHandler(context)
+            return INSTANCE!!
+        }
 
     }
     override fun onCreate(banco: SQLiteDatabase?) {

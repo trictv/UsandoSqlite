@@ -1,8 +1,7 @@
 package com.trictv.usandosqlite
 
-import android.content.ContentValues
+import android.content.Intent
 import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -10,12 +9,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.trictv.usandosqlite.database.DatabaseHandler
 import com.trictv.usandosqlite.databinding.ActivityMainBinding
+import com.trictv.usandosqlite.entity.Cadastro
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var binding : ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
-    private lateinit var banco : SQLiteDatabase
+    private lateinit var banco: DatabaseHandler
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,102 +26,113 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        banco = openOrCreateDatabase("bdfile.sqlite", MODE_PRIVATE, null)
-
-        banco.execSQL("Create Table if not exists cadastro (_id integer primary key autoincrement, nome text, telefone text)")
-
+        banco = DatabaseHandler.getInstance(this)
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+
+
     }
 
-    fun btIncluirOnClick(view: View)
-    {
-        val registro = ContentValues()
-        //registro.put("cod", binding.etCod.text.toString())
-        registro.put("nome", binding.etNome.text.toString())
-        registro.put("telefone", binding.etTelefone.text.toString())
+    fun btIncluirOnClick(view: View) {
+        val cadastro =
+            Cadastro(0, binding.etNome.text.toString(), binding.etTelefone.text.toString())
 
-        banco.insert("cadastro", null, registro)
+        banco.inserir(cadastro)
 
-        Toast.makeText(this, "Inclusão efetuada com Sucesso",
-            Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            this, "Inclusão efetuada com Sucesso",
+            Toast.LENGTH_SHORT
+        ).show()
     }
-    fun btAlterarOnClick(view: View)
-    {
-        val registro = ContentValues()
-        //registro.put("cod", binding.etCod.text.toString())
-        registro.put("nome", binding.etNome.text.toString())
-        registro.put("telefone", binding.etTelefone.text.toString())
 
-        banco.update("cadastro", registro,  " _id = ${binding.etCod.text.toString()}", null)
+    fun btAlterarOnClick(view: View) {
 
-        Toast.makeText(this, "Alteração efetuada com Sucesso",
-            Toast.LENGTH_SHORT).show()
+        val cadastro = Cadastro(
+            binding.etCod.text.toString().toInt(),
+            binding.etNome.text.toString(),
+            binding.etTelefone.text.toString()
+        )
+
+        banco.alterar(cadastro)
+
+        Toast.makeText(
+            this, "Alteração efetuada com Sucesso",
+            Toast.LENGTH_SHORT
+        ).show()
     }
-    fun btExcluirOnClick(view: View)
-    {
-        banco.delete("cadastro", " _id = ${binding.etCod.text.toString()}", null)
 
-        Toast.makeText(this, "Exclusão efetuada com Sucesso",
-            Toast.LENGTH_SHORT).show()
-    }
-    fun btPesquisarOnClick(view: View)
-    {
-       val registro: Cursor =  banco.query(
-           "cadastro",
-           null,
-           "_id = ${binding.etCod.text.toString()}",
-           null,
-           null,
-           null,
-           null)
-
-        if (registro.moveToNext()){
-            val nome : String = registro.getString(1)
-            val telefone : String = registro.getString(2)
-
-            binding.etNome.setText(nome)
-            binding.etTelefone.setText(telefone)
-        }
+    fun btExcluirOnClick(view: View) {
+        val cod = binding.etCod.text.toString()
+        if (cod.isEmpty())
+            Toast.makeText(
+                this, "Informe o código do registro",
+                Toast.LENGTH_SHORT
+            ).show()
         else
         {
+            banco.excluir(cod.toInt())
+
+
+            Toast.makeText(
+                this, "Exclusão efetuada com Sucesso",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    fun btPesquisarOnClick(view: View) {
+        if (binding.etCod.text.toString().isEmpty()) {
+            Toast.makeText(
+                this, "Informe o código do registro",
+                Toast.LENGTH_SHORT
+            ).show()
+            return
+        }
+
+        val registro: Cadastro? = banco.pesquisar(binding.etCod.text.toString().toInt())
+
+
+        if (registro != null) {
+            binding.etNome.setText(registro.nome)
+            binding.etTelefone.setText(registro.telefone)
+        } else {
             binding.etNome.setText("")
             binding.etTelefone.setText("")
 
-            Toast.makeText(this,
+            Toast.makeText(
+                this,
                 "Registro não encontrado",
-                Toast.LENGTH_SHORT).show()
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
-    fun btListarOnClick(view: View)
-    {
-        val registro: Cursor =  banco.query(
-            "cadastro",
-            null,
-            null,
-            null,
-            null,
-            null,
-            null)
 
-        val saida = StringBuilder()
+    fun btListarOnClick(view: View) {
+        val intent = Intent(this, ListarActivity::class.java)
+        startActivity(intent)
 
-        while (registro.moveToNext()){
-            //val cod : String = registro.getString(0)
-            val nome : String = registro.getString(1)
-            val telefone : String = registro.getString(2)
+//        val registro: Cursor = banco.listar()
+//
+//        val saida = StringBuilder()
+//
+//        while (registro.moveToNext()) {
+//            val nome: String = registro.getString(DatabaseHandler.COLUMN_NOME.toInt())
+//            val telefone: String = registro.getString(DatabaseHandler.COLUMN_TELEFONE.toInt())
+//
+//            saida.append(" ${nome} - ${telefone}\n")
+//        }
+//
+//        Toast.makeText(
+//            this,
+//            saida.toString(),
+//            Toast.LENGTH_SHORT
+//        ).show()
 
-            saida.append(" ${nome} - ${telefone}\n")
-        }
 
-        Toast.makeText(
-            this,
-            saida.toString(),
-            Toast.LENGTH_SHORT).show()
 
     }
 }
