@@ -1,7 +1,11 @@
 package com.trictv.usandosqlite
 
+import android.content.ContentValues
+import android.database.Cursor
+import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -10,12 +14,21 @@ import com.trictv.usandosqlite.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding : ActivityMainBinding
+
+    private lateinit var banco : SQLiteDatabase
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        banco = openOrCreateDatabase("bdfile.sqlite", MODE_PRIVATE, null)
+
+        banco.execSQL("Create Table if not exists cadastro (_id integer primary key autoincrement, nome text, telefone text)")
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -24,9 +37,90 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun btIncluirOnClick(view: View) {}
-    fun btAlterarOnClick(view: View) {}
-    fun btExcluirOnClick(view: View) {}
-    fun btPesquisarOnClick(view: View) {}
-    fun btListarOnClick(view: View) {}
+    fun btIncluirOnClick(view: View)
+    {
+        val registro = ContentValues()
+        //registro.put("cod", binding.etCod.text.toString())
+        registro.put("nome", binding.etNome.text.toString())
+        registro.put("telefone", binding.etTelefone.text.toString())
+
+        banco.insert("cadastro", null, registro)
+
+        Toast.makeText(this, "Inclusão efetuada com Sucesso",
+            Toast.LENGTH_SHORT).show()
+    }
+    fun btAlterarOnClick(view: View)
+    {
+        val registro = ContentValues()
+        //registro.put("cod", binding.etCod.text.toString())
+        registro.put("nome", binding.etNome.text.toString())
+        registro.put("telefone", binding.etTelefone.text.toString())
+
+        banco.update("cadastro", registro,  " _id = ${binding.etCod.text.toString()}", null)
+
+        Toast.makeText(this, "Alteração efetuada com Sucesso",
+            Toast.LENGTH_SHORT).show()
+    }
+    fun btExcluirOnClick(view: View)
+    {
+        banco.delete("cadastro", " _id = ${binding.etCod.text.toString()}", null)
+
+        Toast.makeText(this, "Exclusão efetuada com Sucesso",
+            Toast.LENGTH_SHORT).show()
+    }
+    fun btPesquisarOnClick(view: View)
+    {
+       val registro: Cursor =  banco.query(
+           "cadastro",
+           null,
+           "_id = ${binding.etCod.text.toString()}",
+           null,
+           null,
+           null,
+           null)
+
+        if (registro.moveToNext()){
+            val nome : String = registro.getString(1)
+            val telefone : String = registro.getString(2)
+
+            binding.etNome.setText(nome)
+            binding.etTelefone.setText(telefone)
+        }
+        else
+        {
+            binding.etNome.setText("")
+            binding.etTelefone.setText("")
+
+            Toast.makeText(this,
+                "Registro não encontrado",
+                Toast.LENGTH_SHORT).show()
+        }
+    }
+    fun btListarOnClick(view: View)
+    {
+        val registro: Cursor =  banco.query(
+            "cadastro",
+            null,
+            null,
+            null,
+            null,
+            null,
+            null)
+
+        val saida = StringBuilder()
+
+        while (registro.moveToNext()){
+            //val cod : String = registro.getString(0)
+            val nome : String = registro.getString(1)
+            val telefone : String = registro.getString(2)
+
+            saida.append(" ${nome} - ${telefone}\n")
+        }
+
+        Toast.makeText(
+            this,
+            saida.toString(),
+            Toast.LENGTH_SHORT).show()
+
+    }
 }
