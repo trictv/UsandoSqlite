@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.cursoradapter.widget.SimpleCursorAdapter
+import com.trictv.usandosqlite.adapter.MeuAdapter
 import com.trictv.usandosqlite.database.DatabaseHandler
 import com.trictv.usandosqlite.databinding.ActivityListarBinding
 
@@ -45,16 +46,18 @@ class ListarActivity : AppCompatActivity() {
 //        binding.lvRegistros.adapter = adapter
 
 
+//        val cursor: Cursor = banco.listar()
+//        val adapter = SimpleCursorAdapter(
+//            this,
+//            android.R.layout.simple_list_item_2,
+//            cursor,
+//            arrayOf("nome","telefone"),
+//            intArrayOf(android.R.id.text1, android.R.id.text2),
+//            0
+//        )
         val cursor: Cursor = banco.listar()
-        val adapter = SimpleCursorAdapter(
-            this,
-            android.R.layout.simple_list_item_1,
-            cursor,
-            arrayOf("nome"),
-            intArrayOf(android.R.id.text1),
-            0
-        )
 
+        val adapter = MeuAdapter(this, cursor)
         binding.lvRegistros.adapter = adapter
 
 
